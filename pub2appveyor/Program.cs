@@ -109,20 +109,20 @@ namespace pub2appveyor
 									  new ProviderSetting() { Name = "website", Value = new Value() { value = webDeployProfile.MsdeploySite } },
 									  new ProviderSetting() { Name = "username", Value = new Value() { value = webDeployProfile.UserName } },
 									  new ProviderSetting() { Name = "password", Value = new Value() { value = webDeployProfile.UserPWD } },
-									  //new ProviderSetting() { Name = "ntlm", Value = new Value() { value = null } },
+									  new ProviderSetting() { Name = "ntlm", Value = new Value() { value = null } },
 									  new ProviderSetting() { Name = "remove_files", Value = new Value() { value = "true" } },
 									  new ProviderSetting() { Name = "app_offline", Value = new Value() { value = "true" } },
-									  //new ProviderSetting() { Name = "do_not_use_checksum", Value = new Value() { value = null } },
-									  //new ProviderSetting() { Name = "skip_dirs", Value = new Value() { value = null } },
-									  //new ProviderSetting() { Name = "skip_files", Value = new Value() { value = null } },
-									  //new ProviderSetting() { Name = "pre_sync", Value = new Value() { value = null } },
-									  //new ProviderSetting() { Name = "post_sync", Value = new Value() { value = null } },
-									  //new ProviderSetting() { Name = "sync_wait_attempts", Value = new Value() { value = null } },
-									  //new ProviderSetting() { Name = "sync_wait_interval", Value = new Value() { value = null } },
-									  //new ProviderSetting() { Name = "artifact", Value = new Value() { value = null } },
-									  //new ProviderSetting() { Name = "aspnet5", Value = new Value() { value = null } },
+									  new ProviderSetting() { Name = "do_not_use_checksum", Value = new Value() { value = null } },
+									  new ProviderSetting() { Name = "skip_dirs", Value = new Value() { value = null } },
+									  new ProviderSetting() { Name = "skip_files", Value = new Value() { value = null } },
+									  new ProviderSetting() { Name = "pre_sync", Value = new Value() { value = null } },
+									  new ProviderSetting() { Name = "post_sync", Value = new Value() { value = null } },
+									  new ProviderSetting() { Name = "sync_wait_attempts", Value = new Value() { value = null } },
+									  new ProviderSetting() { Name = "sync_wait_interval", Value = new Value() { value = null } },
+									  new ProviderSetting() { Name = "artifact", Value = new Value() { value = null } },
+									  new ProviderSetting() { Name = "aspnet5", Value = new Value() { value = null } },
 								  },
-					//EnvironmentVariables = new List<object>()
+					EnvironmentVariables = new List<object>()
 				}
 			};
 
@@ -167,9 +167,7 @@ namespace pub2appveyor
 
 			string envJson = JsonConvert.SerializeObject(newEnv, jsonSerializerSettings);
 
-			//envJson = "{   \"name\":\"production\",   \"provider\":\"FTP\",   \"settings\":{				\"providerSettings\":[		           {            \"name\":\"server\",		              \"value\":{               \"value\":\"ftp.myserver.com\",		                 \"isEncrypted\":false            }},         {            \"name\":\"username\",            \"value\":{               \"value\":\"ftp-user\",               \"isEncrypted\":false            }         },         {            \"name\":\"password\",            \"value\":{               \"value\":\"password\",               \"isEncrypted\":true            }         }      ],      \"environmentVariables\":[         {            \"name\":\"my-var\",            \"value\":{               \"value\":\"123\",               \"isEncrypted\":false            }         }      ]   }}";
-
-			using (var response = await httpClient.PostAsync("https://ci.appveyor.com/api/environments", new StringContent(envJson)))
+			using (var response = await httpClient.PostAsync("https://ci.appveyor.com/api/environments", new StringContent(envJson, Encoding.UTF8, "application/json")))
 			{
 				response.EnsureSuccessStatusCode();
 
