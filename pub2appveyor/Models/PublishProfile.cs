@@ -7,8 +7,6 @@ namespace pub2appveyor.Models
 	[XmlRoot(ElementName = "publishProfile")]
 	public class PublishProfile
 	{
-		[XmlElement(ElementName = "databases")]
-		public string Databases { get; set; }
 		[XmlAttribute(AttributeName = "profileName")]
 		public string ProfileName { get; set; }
 		[XmlAttribute(AttributeName = "publishMethod")]
