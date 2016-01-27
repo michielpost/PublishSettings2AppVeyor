@@ -32,17 +32,33 @@ namespace pub2appveyor
 		static async Task MainAsync(string[] args)
 		{
 			string path = Directory.GetCurrentDirectory();
+			if (args.Count() > 1)
+				path = args[1];
+
+			Console.WriteLine("Reading files from: " + path);
+
+			string appVeyorKey = null;
+
+			//Get AppVeyor API key from first argument
 			if (args.Any())
-				path = args.First();
+				appVeyorKey = args.First();
 
-			if (!Directory.Exists(path))
-				Directory.CreateDirectory(path);
+			//Or ask for AppVeyor API key
+			if (string.IsNullOrWhiteSpace(appVeyorKey))
+			{
+				Console.WriteLine("Enter AppVeyor API key:");
+				appVeyorKey = Console.ReadLine();
 
-			Console.WriteLine("Wirte output to: " + path);
+				if (string.IsNullOrEmpty(appVeyorKey))
+				{
+					Console.WriteLine("No key, exiting");
+					return;
+				}
+			}
+
 
 
 			//Configure HttpClient for AppVeyor communication
-			var appVeyorKey = ConfigurationManager.AppSettings["AppVeyorKey"];
 			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", appVeyorKey);
 
