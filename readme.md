@@ -8,6 +8,9 @@ Tested with PublishSettings downloaded from Azure.
 Works great with this tool to mass download all your Azure Website publishing profiles:
 https://github.com/michielpost/DumpAzurePublishProfiles
 
+##Download
+[Download latest version from build server.](https://ci.appveyor.com/project/michielpost/publishsettings2appveyor/build/artifacts)
+
 ##Useage
 - Run `pub2appveyor` it will ask for your AppVeyor API key and upload all PublishSettings in the current directory  
 - Run `pub2appveyor <AppVeyor-key>` to upload all PublishSettings in the current directory  
