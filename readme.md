@@ -9,7 +9,7 @@ Works great with this tool to mass download all your Azure Website publishing pr
 https://github.com/michielpost/DumpAzurePublishProfiles
 
 ##Useage
-- Insert your personal key to the AppVeyorKey setting in App.config
-- Compile pub2appveyor
-- Run pub2appveyor "C:\path_to_directory_with_PublishSettings"
+- Run `pub2appveyor` it will ask for your AppVeyor API key and upload all PublishSettings in the current directory  
+- Run `pub2appveyor <AppVeyor-key>` to upload all PublishSettings in the current directory  
+- Run `pub2appveyor <AppVeyor-key> "C:\path_to_directory_with_PublishSettings"` to upload all PublishSettings in the specified directory
 
