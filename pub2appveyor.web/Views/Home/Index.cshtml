@@ -1,0 +1,150 @@
+﻿@{
+    ViewData["Title"] = "Upload publishsettings to AppVeyor";
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+        
+
+            <header>
+                <h1>Drag and drop .publishsettings files to create AppVeyor Environments</h1>
+                Name of the file will be the name of the environment.
+            </header>
+        <h4>AppVeyor API Token</h4>
+        Needed for access to AppVeyor. Will not be stored on the server.
+        <div>
+            <input type="text" name="apiKey" id="apiKey" />
+        </div>
+            <style>
+                #holder {
+                    border: 10px dashed #ccc;
+                    width: 300px;
+                    min-height: 300px;
+                    margin: 20px auto;
+                }
+
+                    #holder.hover {
+                        border: 10px dashed #0c0;
+                    }
+
+                    #holder img {
+                        display: block;
+                        margin: 10px auto;
+                    }
+
+                    #holder p {
+                        margin: 10px;
+                        font-size: 14px;
+                    }
+
+                progress {
+                    width: 100%;
+                }
+
+                    progress:after {
+                        content: '%';
+                    }
+
+                .fail {
+                    background: #c00;
+                    padding: 2px;
+                    color: #fff;
+                }
+
+                .hidden {
+                    display: none !important;
+                }
+            </style>
+            <article>
+                <div id="holder">
+                    Drop .publishsettings files here
+                </div>
+                <p id="upload" class="hidden"><label>Drag & drop not supported, but you can still upload via this input field:<br><input type="file"></label></p>
+                <p id="filereader">File API & FileReader API not supported</p>
+                <p id="formdata">XHR2's FormData is not supported</p>
+                <p id="progress">XHR2's upload progress isn't supported</p>
+                <p>Upload progress: <progress id="uploadprogress" min="0" max="100" value="0">0</progress></p>
+            </article>
+            <script>
+                var holder = document.getElementById('holder'),
+                tests = {
+                    filereader: typeof FileReader != 'undefined',
+                    dnd: 'draggable' in document.createElement('span'),
+                    formdata: !!window.FormData,
+                    progress: "upload" in new XMLHttpRequest
+                },
+                support = {
+                    filereader: document.getElementById('filereader'),
+                    formdata: document.getElementById('formdata'),
+                    progress: document.getElementById('progress')
+                },
+                acceptedTypes = {
+                    'image/png': true,
+                    'image/jpeg': true,
+                    'image/gif': true
+                },
+                progress = document.getElementById('uploadprogress'),
+                fileupload = document.getElementById('upload');
+
+                "filereader formdata progress".split(' ').forEach(function (api) {
+                    if (tests[api] === false) {
+                        support[api].className = 'fail';
+                    } else {
+                        support[api].className = 'hidden';
+                    }
+                });
+
+                function readfiles(files) {
+                    var formData = tests.formdata ? new FormData() : null;
+                    for (var i = 0; i < files.length; i++) {
+                        if (tests.formdata) formData.append('file', files[i]);
+                    }
+
+                    // now post a new XHR request
+                    if (tests.formdata) {
+                        var apiKey = document.getElementById('apiKey').value;
+                        formData.append('apiKey', apiKey)
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', '/home/upload');
+                        xhr.onload = function () {
+                            progress.value = progress.innerHTML = 100;
+                        };
+
+                        if (tests.progress) {
+                            xhr.upload.onprogress = function (event) {
+                                if (event.lengthComputable) {
+                                    var complete = (event.loaded / event.total * 100 | 0);
+                                    progress.value = progress.innerHTML = complete;
+                                }
+                            }
+                        }
+
+                        xhr.send(formData);
+                    }
+                }
+
+                if (tests.dnd) {
+                    holder.ondragover = function () { this.className = 'hover'; return false; };
+                    holder.ondragend = function () { this.className = ''; return false; };
+                    holder.ondrop = function (e) {
+                        this.className = '';
+                        e.preventDefault();
+                        readfiles(e.dataTransfer.files);
+                    }
+                } else {
+                    fileupload.className = 'hidden';
+                    fileupload.querySelector('input').onchange = function () {
+                        readfiles(this.files);
+                    };
+                }
+
+            </script>
+
+
+    </div>
+    <div class="col-md-3">
+        Source is on GitHub: <a href="https://github.com/michielpost/PublishSettings2AppVeyor">https://github.com/michielpost/PublishSettings2AppVeyor</a>
+        <br />Also available as standalone executable.
+    </div>
+</div>

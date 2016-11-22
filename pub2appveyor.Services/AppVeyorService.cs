@@ -1,82 +1,41 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using pub2appveyor.Models;
+﻿using pub2appveyor.Services.Models;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Http;
+using System.Text;
 
-namespace pub2appveyor
+namespace pub2appveyor.Services
 {
-	class Program
-	{
-		private static HttpClient httpClient = new HttpClient();
+    public class AppVeyorService
+    {
+		private HttpClient httpClient = new HttpClient();
 
-		static void Main(string[] args)
-		{
-			MainAsync(args).Wait();
-			// or, if you want to avoid exceptions being wrapped into AggregateException:
-			//  MainAsync().GetAwaiter().GetResult();
-
-			Console.WriteLine("Press ENTER to exit.");
-			Console.ReadLine();
-		}
-
-
-		static async Task MainAsync(string[] args)
-		{
-			string path = Directory.GetCurrentDirectory();
-			if (args.Count() > 1)
-				path = args[1];
-
-			Console.WriteLine("Reading files from: " + path);
-
-			string appVeyorKey = null;
-
-			//Get AppVeyor API key from first argument
-			if (args.Any())
-				appVeyorKey = args.First();
-
-			//Or ask for AppVeyor API key
-			if (string.IsNullOrWhiteSpace(appVeyorKey))
-			{
-				Console.WriteLine("Enter AppVeyor API key:");
-				appVeyorKey = Console.ReadLine();
-
-				if (string.IsNullOrEmpty(appVeyorKey))
-				{
-					Console.WriteLine("No key, exiting");
-					return;
-				}
-			}
-
-
-
+		public AppVeyorService(string appVeyorKey)
+        {
 			//Configure HttpClient for AppVeyor communication
 			httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", appVeyorKey);
 
-			//Foreach PublishSettings file in this directory
-			var allFiles = Directory.GetFiles(path, "*.PublishSettings");
+		}
 
-			if (!allFiles.Any())
-				return;
-
-			Console.WriteLine("Number of files found: " + allFiles.Count());
-
+		public async Task<string> Process(List<IFormFile> allFiles)
+		{
+			StringBuilder result = new StringBuilder();
 
 			var allEnvironments = await GetAllAppVeyorEnvironments();
 
 
 			foreach (var file in allFiles)
 			{
-				var fileInfo = new FileInfo(file);
+				var fileInfo = new FileInfo(file.FileName);
 				var fileName = fileInfo.Name.Replace(fileInfo.Extension, string.Empty);
 
 				//Parse it
@@ -84,17 +43,17 @@ namespace pub2appveyor
 
 				var webDeployProfile = publishData.PublishProfile.Where(x => x.PublishMethod.ToLowerInvariant() == "msdeploy").FirstOrDefault();
 
-				if(webDeployProfile != null)
+				if (webDeployProfile != null)
 				{
 					//Check if the environment exists on AppVeyor
-					if(allEnvironments.Where(x => x.Name.ToLower() == fileName.ToLower()).Any())
+					if (allEnvironments.Where(x => x.Name.ToLower() == fileName.ToLower()).Any())
 					{
 						//Update it
-						Console.WriteLine("Skipping environment: " + fileName);
+						result.AppendLine("Skipping environment: " + fileName);
 					}
 					else
 					{
-						Console.WriteLine("Creating environment: " + fileName);
+						result.AppendLine("Creating environment: " + fileName);
 						//Create it
 						EnvironmentDetails newEnv = CreateEnvironmentDetails(fileName, webDeployProfile);
 
@@ -106,11 +65,11 @@ namespace pub2appveyor
 
 			}
 
-
+			return result.ToString();
 		}
 
-		
-		private static EnvironmentDetails CreateEnvironmentDetails(string fileName, PublishProfile webDeployProfile)
+
+		private EnvironmentDetails CreateEnvironmentDetails(string fileName, PublishProfile webDeployProfile)
 		{
 			EnvironmentDetails newEnv = new EnvironmentDetails()
 			{
@@ -146,12 +105,12 @@ namespace pub2appveyor
 			return newEnv;
 		}
 
-		static PublishData ParsePublishSettingsFile(string path)
+		PublishData ParsePublishSettingsFile(IFormFile file)
 		{
 			PublishData result = null;
 
 			XmlSerializer serializer = new XmlSerializer(typeof(PublishData));
-			using (StreamReader reader = new StreamReader(path))
+			using (StreamReader reader = new StreamReader(file.OpenReadStream()))
 			{
 				result = (PublishData)serializer.Deserialize(reader);
 			}
@@ -163,7 +122,7 @@ namespace pub2appveyor
 		/// <summary>
 		/// https://ci.appveyor.com/api/environments
 		/// </summary>
-		static async Task<List<AppVeyorEnvironment>> GetAllAppVeyorEnvironments()
+		async Task<List<AppVeyorEnvironment>> GetAllAppVeyorEnvironments()
 		{
 			using (var response = await httpClient.GetAsync("https://ci.appveyor.com/api/environments"))
 			{
@@ -178,7 +137,7 @@ namespace pub2appveyor
 
 		}
 
-		private static async Task CreateEnvironment(EnvironmentDetails newEnv)
+		private async Task CreateEnvironment(EnvironmentDetails newEnv)
 		{
 			var jsonSerializerSettings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
 
@@ -193,7 +152,5 @@ namespace pub2appveyor
 			}
 
 		}
-
-
 	}
 }
